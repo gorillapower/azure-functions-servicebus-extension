@@ -244,12 +244,18 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
 
                 TriggeredFunctionData data = input.GetTriggerFunctionData();
                 FunctionResult result = await _triggerExecutor.TryExecuteAsync(data, linkedCts.Token);
-
+                
                 //handle dryioc container exceptions.
-                if (!result.Succeeded && result.Exception.GetType().FullName == "DryIoc.ContainerException")
+                if (result != null 
+                    && !cancellationToken.IsCancellationRequested
+                    && !result.Succeeded
+                    && result.Exception.GetType().FullName == "DryIoc.ContainerException")
                 {
-                    _logger.LogError(result.Exception, "drylocexception=true");
-                    await Sender.SendAsync(new Message(message.Body));
+                    _logger.LogError(result.Exception, "drylocexception=true,servicebusmessageid={messageid}", message.MessageId);
+
+                    Message retryMessage = message.Clone();
+                    retryMessage.MessageId = Guid.NewGuid().ToString("N");
+                    await Sender.SendAsync(retryMessage);
                 }
                 else
                 {

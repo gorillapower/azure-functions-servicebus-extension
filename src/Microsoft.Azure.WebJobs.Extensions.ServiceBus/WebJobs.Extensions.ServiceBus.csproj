@@ -4,24 +4,27 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.ServiceBus</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.ServiceBus</RootNamespace>
-    <PackageId>Microsoft.Azure.WebJobs.Extensions.ServiceBus</PackageId>
-    <Description>Microsoft Azure WebJobs SDK ServiceBus Extension</Description>
-    <Version>4.2.1</Version>
+    <PackageId>Gorillapower.WebJobs.Extensions.ServiceBusIocRetry</PackageId>
+    <Description>Microsoft Azure WebJobs SDK ServiceBus Extension with Ioc Retry</Description>
+    <Version>1.0.0</Version>
     <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
     <InformationalVersion>$(Version) Commit hash: $(CommitHash)</InformationalVersion>
-    <Authors>Microsoft</Authors>
-    <Company>Microsoft</Company>
+    <Authors>Martin Power</Authors>
+    <Company></Company>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Icon>webjobs.png</Icon>
     <PackageProjectUrl>http://go.microsoft.com/fwlink/?LinkID=320972</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/Azure/azure-functions-servicebus-extension</RepositoryUrl>
+    <RepositoryUrl>https://github.com/gorillapower/azure-functions-servicebus-extension</RepositoryUrl>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\sign.snk</AssemblyOriginatorKeyFile>
     <CodeAnalysisRuleSet>..\..\src.ruleset</CodeAnalysisRuleSet>
     <DelaySign>true</DelaySign>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>Gorillapower.WebJobs.Extensions.ServiceBusIocRetry</Product>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
