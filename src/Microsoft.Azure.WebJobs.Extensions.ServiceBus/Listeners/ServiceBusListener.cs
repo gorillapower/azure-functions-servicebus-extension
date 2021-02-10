@@ -34,6 +34,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
         private readonly ILogger<ServiceBusListener> _logger;
 
         private Lazy<MessageReceiver> _receiver;
+        private Lazy<MessageSender> _sender;
         private Lazy<SessionClient> _sessionClient;
         private ClientEntity _clientEntity;
         private bool _disposed;
@@ -60,6 +61,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
             _loggerFactory = loggerFactory;
             _logger = loggerFactory.CreateLogger<ServiceBusListener>();
             _receiver = CreateMessageReceiver();
+            _sender = CreateMessageSender();
             _sessionClient = CreateSessionClient();
             _scaleMonitor = new Lazy<ServiceBusScaleMonitor>(() => new ServiceBusScaleMonitor(_functionId, _entityType, _entityPath, _serviceBusAccount.ConnectionString, _receiver, _loggerFactory));
             _singleDispatch = singleDispatch;
@@ -76,6 +78,8 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
         }
 
         internal MessageReceiver Receiver => _receiver.Value;
+
+        internal MessageSender Sender => _sender.Value;
 
         internal IMessageSession MessageSession => _messageSession;
 
@@ -216,6 +220,11 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
             return new Lazy<MessageReceiver>(() => _messagingProvider.CreateMessageReceiver(_entityPath, _serviceBusAccount.ConnectionString));
         }
 
+        private Lazy<MessageSender> CreateMessageSender()
+        {
+            return new Lazy<MessageSender>(() => _messagingProvider.CreateMessageSender(_entityPath, _serviceBusAccount.ConnectionString));
+        }
+
         private Lazy<SessionClient> CreateSessionClient()
         {
             return new Lazy<SessionClient>(() => _messagingProvider.CreateSessionClient(_entityPath, _serviceBusAccount.ConnectionString));
@@ -235,7 +244,17 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
 
                 TriggeredFunctionData data = input.GetTriggerFunctionData();
                 FunctionResult result = await _triggerExecutor.TryExecuteAsync(data, linkedCts.Token);
-                await _messageProcessor.CompleteProcessingMessageAsync(message, result, linkedCts.Token);
+
+                //handle dryioc container exceptions.
+                if (!result.Succeeded && result.Exception.GetType().FullName == "DryIoc.ContainerException")
+                {
+                    _logger.LogError(result.Exception, "drylocexception=true");
+                    await Sender.SendAsync(new Message(message.Body));
+                }
+                else
+                {
+                    await _messageProcessor.CompleteProcessingMessageAsync(message, result, linkedCts.Token);
+                }
             }
         }
 
@@ -283,7 +302,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
                             return;
                         }
 
-                        if (_isSessionsEnabled && ( receiver == null || receiver.IsClosedOrClosing))
+                        if (_isSessionsEnabled && (receiver == null || receiver.IsClosedOrClosing))
                         {
                             try
                             {
@@ -346,7 +365,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
                     catch (Exception ex)
                     {
                         // Log another exception
-                        _logger.LogError(ex, $"An unhandled exception occurred in the message batch receive loop");
+                        _logger.LogError($"An unhandled exception occurred in the message batch receive loop", ex);
 
                         if (_isSessionsEnabled && receiver != null)
                         {

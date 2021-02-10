@@ -328,3 +328,4 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/src/Microsoft.Azure.WebJobs.Extensions.ServiceBus/Listeners/.vshistory/ServiceBusListener.cs
